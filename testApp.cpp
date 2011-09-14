@@ -24,10 +24,9 @@ void testApp::setup(){
 		isButtonOn[i] = false;
 	}
 
-		//audio setup
+	//audio setup
 	int bufferSize		= 512;
 	sampleRate 			= 44100;
-	//phase, phase2, phase3 = 0.0f;
 	phase = 0.0f; phase2 = 0.0f; phase3 = 0.0f; phase4 = 0.0f;
 	phaseAdder = 0.0f; phaseAdder2 = 0.0f; phaseAdder3 = 0.0f; phaseAdder4 = 0.0f;
 	phaseAdderTarget = 0.0f; phaseAdderTarget2 = 0.0f; phaseAdderTarget3 = 0.0f; phaseAdderTarget4 = 0.0f;
@@ -134,25 +133,16 @@ void testApp::draw(){
 
 		//turn buttons on
 		for (int j = 0; j < contourFinder.nBlobs; j++) {
-			ofPoint centroid = contourFinder.blobs[j].centroid;
-			int blobWidth = contourFinder.blobs[j].boundingRect.width;
-			int blobHeight = contourFinder.blobs[j].boundingRect.height;
-			ofPoint topLeft = ofPoint(contourFinder.blobs[j].boundingRect.x,
-				contourFinder.blobs[j].boundingRect.x);
-			ofPoint topRight = ofPoint(topLeft.x, topLeft.y + blobHeight);
-			ofPoint bottomLeft = ofPoint(topLeft.x + blobWidth, topLeft.y);
-			ofPoint bottomRight = ofPoint(topLeft.x + blobWidth, topLeft.y + blobHeight);
 
-			bool isInside = 
-				buttons[i].inside(centroid) ||
-				buttons[i].inside(topLeft) ||
-				buttons[i].inside(topRight) ||
-				buttons[i].inside(bottomLeft) ||
-				buttons[i].inside(bottomRight);
+			bool isInside = false;
+			ofRectangle intersectRect = 
+				grayImage.getIntersectionROI(contourFinder.blobs[j].boundingRect, buttons[i]);
+			if ( intersectRect.width > 0 && intersectRect.height > 0 )
+				isInside = true;
 
 			if (isInside) {
 				isButtonOn[i] = true;
-				continue;
+				break;
 			}
 		}
 	}
@@ -259,10 +249,10 @@ void testApp::audioOut(float * output, int bufferSize, int nChannels){
 
 		float sample_left = 0.0f;
 		float sample_right = 0.0f;
-		if (isButtonOn[0]) sample_left += sample;
-		if (isButtonOn[1]) sample_left += sample2;
-		//if (isQuadrantOn[2]) sample_right += sample3;
-		//if (isQuadrantOn[3]) sample_right += sample4;
+		if (isButtonOn[0]) 
+			sample_left += sample;
+		if (isButtonOn[1]) 
+			sample_right += sample2;
 
 		lAudio[i] = output[i*nChannels    ] = sample_left * volume * leftScale;
 		rAudio[i] = output[i*nChannels + 1] = sample_right * volume * rightScale;
